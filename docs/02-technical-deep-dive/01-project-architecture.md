@@ -446,7 +446,6 @@ class FixGenerator:
 ## 输出要求
 请严格按照以下JSON格式输出修复建议：
 
-```json
 {
   "explanation": "修复说明（中文）",
   "fixed_code": "完整的修复后代码块",
@@ -460,7 +459,6 @@ class FixGenerator:
   "confidence": 0.95,
   "test_suggestion": "建议添加的测试用例"
 }
-```
 
 注意：
 1. fixed_code必须是可直接运行的完整代码块

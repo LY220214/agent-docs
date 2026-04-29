@@ -653,4 +653,4 @@ OpenClaw安全设计局限（架构层面）：
 - [ ] **实际应用**：如果你要在公司引入AI Agent框架，你会如何评估和选择？沙箱策略在你的决策中占多大权重？
 
 > **上一篇**：[Claude Code SDK 技术分析](../02-technical-deep-dive/03-claude-sdk-internals.md)
-> **下一篇**：[AI Coding实践与Skills系统设计](../05-practical-experience/01-ai-coding-practices.md)
+> **下一篇**：[AI Coding实践与Skills系统设计](../04-practical-experience/01-ai-coding-practices.md)

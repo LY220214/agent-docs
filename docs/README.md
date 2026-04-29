@@ -127,9 +127,9 @@ Subagent是Agent的"下属"。主Agent负责整体规划和结果汇总，Subage
 | ⭐⭐⭐ | 🏗️ [项目架构与技术难点](./02-technical-deep-dive/01-project-architecture.md) | AI代码修复+Agent Loop实现 | 45min | Agent Loop、状态机、代码修复 |
 | ⭐⭐⭐ | 🤝 [Subagent协作与代码评审](./02-technical-deep-dive/02-subagent-code-review.md) | 多专家并联+置信度过滤 | 40min | Subagent、置信度、代码评审 |
 | ⭐⭐⭐⭐ | ⚙️ [Claude Code SDK底层原理](./02-technical-deep-dive/03-claude-sdk-internals.md) | MCP协议+状态机+Session管理 | 50min | MCP协议、SDK架构、Session |
-| ⭐⭐⭐ | ⚔️ [Claude Code技术对比](./04-comparative-analysis/01-claude-comparison.md) | 工具对比+思维链+记忆架构 | 35min | 技术选型、思维链、记忆 |
-| ⭐⭐⭐ | 🛠️ [AI Coding与Skills系统](./05-practical-experience/01-ai-coding-practices.md) | 人vs AI+Skills设计 | 30min | AI Coding、Skills、工具管理 |
-| ⭐⭐⭐ | 🛡️ [威胁情报Agent案例学习](./06-case-studies/01-sangfor-case-study.md) | 14个知识点详解+实操分析 | 25min | 威胁情报、实战应用 |
+| ⭐⭐⭐ | ⚔️ [Claude Code技术对比](./03-comparative-analysis/01-claude-comparison.md) | 工具对比+思维链+记忆架构 | 35min | 技术选型、思维链、记忆 |
+| ⭐⭐⭐ | 🛠️ [AI Coding与Skills系统](./04-practical-experience/01-ai-coding-practices.md) | 人vs AI+Skills设计 | 30min | AI Coding、Skills、工具管理 |
+| ⭐⭐⭐ | 🛡️ [威胁情报Agent案例学习](./05-case-studies/01-sangfor-case-study.md) | 14个知识点详解+实操分析 | 25min | 威胁情报、实战应用 |
 
 ---
 
@@ -232,9 +232,9 @@ L3 高级：架构设计与实战
 | 2 | Claude Code SDK底层原理 | ⭐⭐⭐⭐⭐ | [SDK原理](./02-technical-deep-dive/03-claude-sdk-internals.md) |
 | 3 | Subagent设计有什么讲究？ | ⭐⭐⭐⭐⭐ | [Subagent设计](./02-technical-deep-dive/02-subagent-code-review.md) |
 | 4 | AI如何给出代码级修复建议？ | ⭐⭐⭐⭐⭐ | [项目架构](./02-technical-deep-dive/01-project-architecture.md) |
-| 5 | Claude Code vs Codex 本质区别 | ⭐⭐⭐⭐ | [技术对比](./04-comparative-analysis/01-claude-comparison.md) |
-| 6 | Skills过多导致模型困惑？ | ⭐⭐⭐⭐⭐ | [Skills系统](./05-practical-experience/01-ai-coding-practices.md) |
-| 7 | 思维链修正机制 | ⭐⭐⭐⭐⭐ | [技术对比](./04-comparative-analysis/01-claude-comparison.md) |
+| 5 | Claude Code vs Codex 本质区别 | ⭐⭐⭐⭐ | [技术对比](./03-comparative-analysis/01-claude-comparison.md) |
+| 6 | Skills过多导致模型困惑？ | ⭐⭐⭐⭐⭐ | [Skills系统](./04-practical-experience/01-ai-coding-practices.md) |
+| 7 | 思维链修正机制 | ⭐⭐⭐⭐⭐ | [技术对比](./03-comparative-analysis/01-claude-comparison.md) |
 
 ---
 
@@ -263,7 +263,7 @@ L3 高级：架构设计与实战
 | Day 10 | SDK架构 | 阅读[SDK底层原理](./02-technical-deep-dive/03-claude-sdk-internals.md)前半部分 | 画出SDK核心组件图 |
 | Day 11 | 状态机 | 阅读SDK原理后半部分，理解状态机设计 | 写出状态转换表 |
 | Day 12 | Session | 深入理解Session管理和持久化 | 解释Session生命周期 |
-| Day 13 | 技术对比 | 阅读[Agent框架对比](./04-comparative-analysis/01-claude-comparison.md) | 列出三个Agent框架的优缺点对比表 |
+| Day 13 | 技术对比 | 阅读[Agent框架对比](./03-comparative-analysis/01-claude-comparison.md) | 列出三个Agent框架的优缺点对比表 |
 | Day 14 | 周复盘 | 回顾本周内容，重点理解SDK和Subagent | 完成一份L2知识脑图 |
 
 ### 第三周：架构设计（Day 15-21）
@@ -273,8 +273,8 @@ L3 高级：架构设计与实战
 | Day 15 | 会话隔离 | 深入理解会话隔离和权限控制 | 写出隔离方案的关键设计点 |
 | Day 16 | Harness 驾驭工程 | 理解 Harness = 模型之外的一切（约束+反馈+控制） | 用自己的话解释 Agent = Model + Harness |
 | Day 17 | 上下文压缩 | 学习语义摘要和上下文压缩策略 | 写出压缩前后的对比示例 |
-| Day 18 | Skills系统 | 阅读[AI Coding实践](./05-practical-experience/01-ai-coding-practices.md) | 列出Skills设计的核心原则 |
-| Day 19 | 实战案例 | 阅读[威胁情报 Agent 案例](./06-case-studies/01-sangfor-case-study.md) | 对比两个实战案例的异同 |
+| Day 18 | Skills系统 | 阅读[AI Coding实践](./04-practical-experience/01-ai-coding-practices.md) | 列出Skills设计的核心原则 |
+| Day 19 | 实战案例 | 阅读[威胁情报 Agent 案例](./05-case-studies/01-sangfor-case-study.md) | 对比两个实战案例的异同 |
 | Day 20 | 周复盘 | 回顾本周内容，重点理解架构设计 | 完成一份L3知识脑图 |
 
 ### 第四周：动手实践（Day 21-29）

@@ -530,5 +530,5 @@ Agent方式：
 - [ ] **安全意识**：威胁情报Agent面临哪些独特的技术挑战？幻觉、实时性、对抗攻击分别怎么应对？
 - [ ] **应用场景**：Agent系统在威胁情报领域有哪些实际应用场景？每个场景的核心价值是什么？
 
-> **上一篇**：[AI Coding实践与Skills系统设计](../05-practical-experience/01-ai-coding-practices.md)  
+> **上一篇**：[AI Coding实践与Skills系统设计](../04-practical-experience/01-ai-coding-practices.md)  
 > **返回**：[文档库首页](../README.md)

@@ -1139,4 +1139,4 @@ claude-agent-analysis/
 ---
 
 > **上一篇**：[Subagent协作与代码评审设计](./02-subagent-code-review.md)
-> **下一篇**：[Claude Code相关技术对比与深度问题](../04-comparative-analysis/01-claude-comparison.md)
+> **下一篇**：[Claude Code相关技术对比与深度问题](../03-comparative-analysis/01-claude-comparison.md)
