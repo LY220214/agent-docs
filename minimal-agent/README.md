@@ -23,6 +23,7 @@
 ### 1. 安装依赖
 
 ```bash
+# 需要 Python 3.10+
 pip install openai
 ```
 
@@ -84,10 +85,13 @@ minimal-agent/
 ### `agent.py` —— Agent 的大脑
 
 - `SystemPrompt`: 告诉 LLM 它是什么、能做什么、输出什么格式
-- `SimpleAgent.run()`: ReAct 循环的核心
-- `_think()`: 调用 LLM 分析当前状态
+- `run()`: ReAct 循环的核心——在其中依次完成 思考（调用LLM）→ 行动（执行工具）→ 观察（反馈结果）
+- `_call_llm()`: 调用 LLM API，相当于"思考"阶段
+- `_parse_response()`: 解析 LLM 返回的 JSON，判断是工具调用还是最终答案
 - `_act()`: 执行 LLM 选择的工具
-- `_observe()`: 将工具结果反馈给 LLM
+- `_force_final_answer()`: 达到最大循环次数时，强制 LLM 给出最终答案
+
+> 💡 `_think()` 和 `_observe()` 在本代码中并非独立方法——思考逻辑在 `_call_llm()`+`_parse_response()` 中，观察逻辑直接内嵌在 `run()` 循环里。
 
 ### `tools.py` —— Agent 的手脚
 

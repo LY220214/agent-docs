@@ -496,7 +496,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 // Session定义 —— 一个会话就是一次完整的对话过程
@@ -717,8 +717,8 @@ func (g *MultiTenantGateway) compressContext(
 	ctx context.Context,
 	session *Session,
 ) (*Session, error) {
-	if len(session.Messages) < 20 {
-		return session, nil // 消息太少，不需要压缩
+	if len(session.Messages) < g.compressor.config.MinMessages {
+		return session, nil // 消息数未达到压缩阈值，不需要压缩
 	}
 
 	// 保留最近的消息（最近10条，这些是"新鲜记忆"）
@@ -760,10 +760,10 @@ func (g *MultiTenantGateway) sessionKey(tenantID, sessionID string) string {
 }
 
 // estimateTokenCount —— 估算Token数量
-// 简化估算：每个中文字约1个token，每个英文单词约1个token
-// 实际生产中会用更精确的tokenizer
+// 简化估算：仅用于演示。实际生产应使用 tokenizer（如 tiktoken）
+// 英语约 4 字符/Token，中文约 1-2 字符/Token
 func (g *MultiTenantGateway) estimateTokenCount(messages []Message) int {
-	// 简化的估算：每个字符约0.25个token
+	// 简化的估算：每个字符约0.25个token（仅对英语粗略成立，中文偏差较大）
 	totalChars := 0
 	for _, msg := range messages {
 		totalChars += len(msg.Content)

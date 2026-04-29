@@ -38,6 +38,8 @@
 
 ---
 
+> 💡 **阅读提示**：上表列出了14个技术要点，涵盖方法论、架构、趋势、实践等多个维度。其中要点9-14聚焦于多Agent论文处理流水线，以下将以此流水线为实例，展示多Agent协同的实际应用。
+
 ## 🎯 技术要点详解
 
 ### 要点1-4：项目表达与Skill系统
@@ -185,13 +187,13 @@ AI辅助场景
 │                                                             │
 │  Step 1: 检索Agent                                           │
 │  ├─ 输入：研究主题/关键词                                     │
-│  ├─ 工具：Google Scholar API、arXiv API、PubMed              │
+│  ├─ 工具：学术搜索引擎（如 Semantic Scholar API、arXiv API、PubMed API）              │
 │  ├─ 输出：相关论文列表（标题、摘要、URL）                      │
 │  └─ 策略：多源检索 + 去重 + 相关性排序                        │
 │                                                             │
 │  Step 2: 筛选Agent                                           │
-│  ├─ 输入：论文列表                                           │
-│  ├─ 逻辑：阅读摘要 → 评估相关性 → 排除不相关                  │
+│  ├─ 输入：论文列表（由检索Agent返回）                          │
+│  ├─ 逻辑：先基于元数据（发表时间、关键词、来源）初筛 → 再阅读摘要评估相关性 → 排除不相关
 │  ├─ 输出：相关论文子集                                        │
 │  └─ 策略：快速摘要 + 关键词匹配 + 发表时间过滤                │
 │                                                             │
@@ -296,7 +298,7 @@ class PaperResearchOrchestrator:
 输入："大语言模型在网络安全中的应用"
 
 检索过程：
-├─ Google Scholar: 搜索关键词 "LLM cybersecurity"
+├─ Semantic Scholar: 搜索关键词 "LLM cybersecurity"
 │  → 找到 156 篇论文
 ├─ arXiv: 搜索 "large language model security"
 │  → 找到 89 篇论文

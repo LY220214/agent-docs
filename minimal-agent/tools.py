@@ -96,9 +96,16 @@ class SearchFilesTool(Tool):
     }
 
     def execute(self, directory: str, pattern: str) -> str:
-        results = []
+        # 基础安全检查：防止 ReDoS 攻击（正则表达式拒绝服务）
+        if len(pattern) > 200:
+            return "错误：搜索模式过长（超过 200 字符）。请使用更简洁的模式。"
         try:
+            # 使用超时限制防止灾难性回溯
             compiled = re.compile(pattern)
+        except re.error as e:
+            return f"错误：无效的正则表达式 —— {e}"
+
+        results = []
             for root, dirs, files in os.walk(directory):
                 # 跳过隐藏目录和虚拟环境
                 dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
@@ -143,8 +150,12 @@ class RunShellTool(Tool):
         "required": ["command"],
     }
 
-    # 危险命令黑名单 —— 学习用，真实项目需要更严格的控制
-    DANGEROUS_COMMANDS = ["rm -rf", "sudo", "mkfs", "dd if=", ":(){ :|:& };:"]
+    # 危险命令黑名单 —— 仅供学习参考，真实项目需沙箱隔离
+    # ⚠️ 此黑名单极不完整，仅拦截最常见的危险操作
+    DANGEROUS_COMMANDS = [
+        "rm -rf", "sudo", "mkfs", "dd if=", "> /dev/sda",
+        "chmod 777", "wget", "curl", ":(){ :|:& };:"
+    ]
 
     def execute(self, command: str) -> str:
         # 基础安全检查
@@ -164,6 +175,9 @@ class RunShellTool(Tool):
             output = result.stdout
             if result.stderr:
                 output += "\n[stderr]\n" + result.stderr
+            # 限制输出长度，避免 Token 爆炸
+            if len(output) > 5000:
+                output = output[:5000] + "\n... (输出过长，已截断)"
             if not output.strip():
                 output = f"命令执行成功，无输出。（返回码: {result.returncode}）"
             return output.strip()

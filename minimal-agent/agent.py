@@ -182,7 +182,7 @@ class SimpleAgent:
             print(f"   ❌ LLM 调用失败: {e}")
             return json.dumps({"final_answer": f"API 调用失败：{e}"})
 
-    def _parse_response(self, response: str) -> dict | None:
+    def _parse_response(self, response: str) -> "dict | None":
         """解析 LLM 的 JSON 响应。返回 None 表示解析失败。"""
         try:
             # 提取 JSON（LLM 可能在外面包了 markdown 代码块）
@@ -190,7 +190,12 @@ class SimpleAgent:
             if response.startswith("```"):
                 # 去掉 markdown 代码块标记
                 lines = response.split("\n")
-                response = "\n".join(lines[1:-1])
+                # 至少3行才安全切片（```json / {content} / ```）
+                if len(lines) >= 3:
+                    response = "\n".join(lines[1:-1])
+                else:
+                    # 单行或双行不做切片，直接交给 JSON 解析
+                    pass
             return json.loads(response)
         except json.JSONDecodeError as e:
             print(f"   ⚠️ JSON 解析失败: {e}")
@@ -250,8 +255,8 @@ def main():
 """.format(model=MODEL_NAME))
 
     # 检查 API Key
-    if API_KEY == "sk-your-key-here":
-        print("⚠️  请先设置 OPENAI_API_KEY 环境变量。")
+    if not API_KEY or API_KEY == "sk-your-key-here" or len(API_KEY) < 20:
+        print("⚠️  请先设置有效的 OPENAI_API_KEY 环境变量。")
         print("   export OPENAI_API_KEY='your-api-key'")
         sys.exit(1)
 
