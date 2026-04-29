@@ -106,6 +106,7 @@ class SearchFilesTool(Tool):
             return f"错误：无效的正则表达式 —— {e}"
 
         results = []
+        try:
             for root, dirs, files in os.walk(directory):
                 # 跳过隐藏目录和虚拟环境
                 dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
@@ -120,12 +121,12 @@ class SearchFilesTool(Tool):
                                     results.append(f"{filepath}:{lineno}: {line.strip()}")
                     except Exception:
                         continue  # 跳过无法读取的文件
-
-            if not results:
-                return f"在 {directory} 中没有找到匹配 '{pattern}' 的内容。"
-            return "\n".join(results[:50])  # 最多返回 50 条
         except Exception as e:
             return f"搜索时出错：{e}"
+
+        if not results:
+            return f"在 {directory} 中没有找到匹配 '{pattern}' 的内容。"
+        return "\n".join(results[:50])  # 最多返回 50 条
 
 
 # ──────────────────────────────────────────────
