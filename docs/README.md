@@ -188,7 +188,7 @@ L2 进阶：理解系统设计
 │   └── 上下文压缩：用更少的Token表达同样的信息
 │
 └── 技术选型
-    ├── Claude Code vs Cursor vs Copilot
+    │   ├── Claude Code vs Codex vs OpenClaw
     ├── 各自的设计哲学和适用场景
     └── 为什么选这个不选那个
 ```
@@ -232,7 +232,7 @@ L3 高级：架构设计与实战
 | 2 | Claude Code SDK底层原理 | ⭐⭐⭐⭐⭐ | [SDK原理](./02-technical-deep-dive/03-claude-sdk-internals.md) |
 | 3 | Subagent设计有什么讲究？ | ⭐⭐⭐⭐⭐ | [Subagent设计](./02-technical-deep-dive/02-subagent-code-review.md) |
 | 4 | AI如何给出代码级修复建议？ | ⭐⭐⭐⭐⭐ | [项目架构](./02-technical-deep-dive/01-project-architecture.md) |
-| 5 | Claude Code vs Cursor 本质区别 | ⭐⭐⭐⭐ | [技术对比](./04-comparative-analysis/01-claude-comparison.md) |
+| 5 | Claude Code vs Codex 本质区别 | ⭐⭐⭐⭐ | [技术对比](./04-comparative-analysis/01-claude-comparison.md) |
 | 6 | Skills过多导致模型困惑？ | ⭐⭐⭐⭐⭐ | [Skills系统](./05-practical-experience/01-ai-coding-practices.md) |
 | 7 | 思维链修正机制 | ⭐⭐⭐⭐⭐ | [技术对比](./04-comparative-analysis/01-claude-comparison.md) |
 
@@ -263,7 +263,7 @@ L3 高级：架构设计与实战
 | Day 10 | SDK架构 | 阅读[SDK底层原理](./02-technical-deep-dive/03-claude-sdk-internals.md)前半部分 | 画出SDK核心组件图 |
 | Day 11 | 状态机 | 阅读SDK原理后半部分，理解状态机设计 | 写出状态转换表 |
 | Day 12 | Session | 深入理解Session管理和持久化 | 解释Session生命周期 |
-| Day 13 | 技术对比 | 阅读[Claude Code技术对比](./04-comparative-analysis/01-claude-comparison.md) | 列出三个工具的优缺点对比表 |
+| Day 13 | 技术对比 | 阅读[Agent框架对比](./04-comparative-analysis/01-claude-comparison.md) | 列出三个Agent框架的优缺点对比表 |
 | Day 14 | 周复盘 | 回顾本周内容，重点理解SDK和Subagent | 完成一份L2知识脑图 |
 
 ### 第三周：架构设计（Day 15-21）
