@@ -1,8 +1,8 @@
 # SDK轻量化重构与多租户架构
 
-> 深度解析Claude Code SDK的轻量化改造与大规模部署架构  
+> 基于Claude API构建后端服务时的架构设计思路与多租户方案  
 > 难度：⭐⭐⭐⭐⭐  
-> 核心概念：Harness抽象、多租户网关、上下文压缩、高可用设计
+> 核心概念：轻量调用层设计、多租户网关、上下文压缩、高可用设计
 
 ---
 
@@ -18,6 +18,14 @@
 - **上下文压缩**：当对话历史太长时，把旧内容压缩成摘要，只保留最近的消息，类似你看书时只记笔记而不背全文
 
 如果你对这些概念还不太熟悉，别担心，本文会在遇到时用通俗的方式解释。
+
+---
+
+> ⚠️ **重要说明**
+>
+> 以下内容讨论的是一种架构设计思路，当你想基于 Claude API 构建自己的 Agent 后端服务时可以参考的模式。**这不是 Claude Code 官方的架构，也不是 Claude Code SDK 的内部实现。** Claude Code 是一个终端 CLI 工具，它有自己的 Agent SDK（`@anthropic-ai/claude-agent-sdk`），提供 `query()`、`ClaudeSDKClient`、`ClaudeAgentOptions` 等接口。本文讨论的"Harness"轻量调用层是多租户后端场景下的一种设计模式，而非官方组件。
+>
+> 简单来说：Claude Code 官方给你的是一把锤子（CLI 工具），本文讨论的是如果你需要一间木工坊（后端服务），该怎么自己搭。
 
 ---
 
@@ -40,70 +48,110 @@
 ## 📋 学习要点
 
 本节涵盖两个核心主题：
-1. **SDK轻量化重构**：为什么需要替换官方SDK，以及如何重构
+1. **轻量调用层设计**：为什么需要构建自己的调用层，以及如何设计
 2. **多租户架构**：多租户多轮对话后端的实现方案
 
 ---
 
-## 🎯 为什么替换官方SDK？
+## 🎯 为什么需要构建自己的调用层？
 
-### 官方CLI的问题
+### Claude Code 是什么，不是什么
+
+Claude Code 是一个**终端 CLI 工具**，不是可直接嵌入后端的 SDK。它设计的目标是在终端里与开发者交互，而不是作为后端服务的组件。将 Claude API 集成到后端服务时，需要自行构建调用层。以下讨论的是这一层的常见设计考虑。
 
 ```
-官方Claude Code CLI的问题：
+Claude Code 官方提供什么 vs 你需要自己构建什么：
+
+┌──────────────────────────────────────────────────────────────────────┐
+│                                                                      │
+│  ✅ Claude Code 官方提供（可直接使用）                                 │
+│  ┌────────────────────────────────────────────────────────────┐      │
+│  │  • Claude Code CLI：终端交互工具，面向开发者个人使用          │      │
+│  │  • Agent SDK（@anthropic-ai/claude-agent-sdk）：            │      │
+│  │    - query()：向 Claude 发送查询                             │      │
+│  │    - ClaudeSDKClient：会话管理客户端                         │      │
+│  │    - ClaudeAgentOptions：Agent 配置选项                      │      │
+│  │    - session_id / fork_session / resume / compact           │      │
+│  │    - AgentDefinition：子 Agent 定义                          │      │
+│  │    - mcpServers：MCP 服务器配置                               │      │
+│  │  • Anthropic API：底层模型调用接口                           │      │
+│  └────────────────────────────────────────────────────────────┘      │
+│                                                                      │
+│  🔧 你需要自己构建（后端服务场景）                                     │
+│  ┌────────────────────────────────────────────────────────────┐      │
+│  │  • 多租户隔离与权限控制                                      │      │
+│  │  • 会话持久化与分布式存储                                    │      │
+│  │  • HTTP/WebSocket API 网关                                   │      │
+│  │  • 上下文压缩策略                                           │      │
+│  │  • 限流、熔断、高可用降级                                    │      │
+│  │  • 工具懒加载与按需调度                                      │      │
+│  │  • 审计日志与用量统计                                        │      │
+│  └────────────────────────────────────────────────────────────┘      │
+│                                                                      │
+│  关键区别：官方 SDK 解决的是"如何与 Claude 对话"，                    │
+│  而后端服务需要解决的是"如何让 100 个团队安全地同时与 Claude 对话"。    │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### 直接使用 CLI 的局限
+
+```
+直接使用 Claude Code CLI 构建后端服务时的问题：
 ┌────────────────────────────────────────────────────────────┐
 │                                                            │
-│  ❌ 问题1: TUI交互逻辑臃肿                                   │
-│     - 大量终端UI渲染代码                                      │
-│     - 难以与后端服务集成                                      │
-│     - 交互逻辑与业务逻辑耦合                                  │
+│  ❌ 问题1: CLI 是终端工具，不是服务组件                      │
+│     - 设计目标是人机交互，不是程序调用                       │
+│     - TUI 渲染逻辑与业务逻辑耦合                            │
+│     - 难以嵌入 HTTP/WebSocket 服务                          │
 │                                                            │
-│  ❌ 问题2: 资源预加载过多                                     │
-│     - 启动时加载所有Tools                                     │
-│     - 内存占用高                                             │
-│     - 冷启动慢（5-10秒）                                     │
+│  ❌ 问题2: 缺乏多租户支持                                   │
+│     - 无租户隔离机制                                        │
+│     - 全局统一的权限配置，无法按用户动态调整                  │
+│     - 无用量统计与配额管理                                   │
 │                                                            │
-│  ❌ 问题3: 难以嵌入分布式后端                                 │
-│     - 设计为单机CLI工具                                       │
-│     - 无状态管理                                             │
-│     - 不支持水平扩展                                         │
+│  ❌ 问题3: 不适合分布式部署                                  │
+│     - 单进程设计，不支持水平扩展                             │
+│     - 会话状态本地管理，无法跨实例共享                       │
+│     - 启动时全量加载工具，内存占用高                         │
 │                                                            │
-│  ❌ 问题4: 权限控制粒度粗                                     │
-│     - 全局统一的权限配置                                      │
-│     - 无法针对不同用户动态调整                                │
+│  ❌ 问题4: 缺少后端必需的运维能力                            │
+│     - 无限流熔断                                            │
+│     - 无审计日志                                            │
+│     - 无高可用降级策略                                      │
 │                                                            │
 └────────────────────────────────────────────────────────────┘
 ```
 
-### 重构前后对比（更清晰的视图）
+### 构建前后对比（更清晰的视图）
 
-> 💡 **白话理解**：官方CLI就像一辆房车，厨房、卧室、客厅全塞在一起，开起来很重。我们把它拆成核心引擎（Harness）和可选配件，就像把房车改造成模块化卡车，需要什么装什么，轻装上阵。
+> 💡 **白话理解**：Claude Code CLI 就像一辆房车，厨房、卧室、客厅全塞在一起，开起来很重，适合一个人自驾游。但如果你要开一家出租车公司（后端服务），就需要把核心引擎拆出来，加上调度系统、计价器、乘客隔离隔板，变成一辆专业的出租车。下面讨论的就是这个"改造"的设计思路。
 
 ```
-重构前 vs 重构后 —— 逐层对比：
+直接使用 CLI vs 构建轻量调用层 —— 逐层对比：
 
 ┌──────────────────────────────────────────────────────────────────────┐
 │                                                                      │
-│  【重构前：官方CLI】              【重构后：轻量化SDK】                  │
+│  【直接使用 CLI】              【构建轻量调用层】                       │
 │                                                                      │
 │  ┌────────────────────┐          ┌────────────────────┐              │
 │  │  TUI渲染层          │          │                    │              │
-│  │  （终端交互界面）    │  ❌ 剥离  │  后端网关层         │              │
+│  │  （终端交互界面）    │  ❌ 不需要 │  后端网关层         │              │
 │  │  · 光标控制         │ ────────→ │  （HTTP API接口）   │              │
 │  │  · 颜色渲染         │          │  · RESTful接口      │              │
 │  │  · 键盘监听         │          │  · WebSocket流式    │              │
 │  └────────────────────┘          └────────────────────┘              │
 │                                                                      │
 │  ┌────────────────────┐          ┌────────────────────┐              │
-│  │  命令解析层          │          │  Harness抽象层      │              │
-│  │  （CLI参数处理）    │  ❌ 剥离  │  （核心引擎）        │              │
+│  │  命令解析层          │          │  轻量调用层          │              │
+│  │  （CLI参数处理）    │  ❌ 不需要 │  （核心引擎）        │              │
 │  │  · /help, /clear   │ ────────→ │  · Agent控制器     │              │
 │  │  · 参数校验         │          │  · MCP接口栈        │              │
 │  │  · 命令路由         │          │  · Prompt管理       │              │
 │  └────────────────────┘          │  · 会话管理         │              │
 │                                  └────────────────────┘              │
 │  ┌────────────────────┐                                               │
-│  │  Agent Loop         │          （以上两层保留，是核心能力）            │
+│  │  Agent Loop         │          （以上两层是自建的核心能力）            │
 │  │  （状态机）         │  ✅ 保留                                       │
 │  └────────────────────┘                                               │
 │                                                                      │
@@ -128,22 +176,24 @@
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-### 轻量化重构方案
+### 轻量调用层设计方案
 
-#### 核心思想：Harness抽象
+> 以下讨论的是一种架构设计思路，当你想基于 Claude API 构建自己的 Agent 后端服务时可以参考的模式。这不是 Claude Code 官方的架构，而是社区和实践中常见的分析设计。
+
+#### 核心思想：将推理与交互分离
 
 将"推理执行"与"交互逻辑"彻底分离，只保留核心能力：
 
 ```
-重构前后对比：
+直接使用 CLI vs 构建轻量调用层：
 
-【重构前 - 官方CLI】                【重构后 - 轻量化SDK】
+【直接使用 CLI】                【构建轻量调用层】
 ┌─────────────────────┐           ┌─────────────────────┐
 │   TUI渲染层          │           │                     │
-│   (终端交互)         │   ❌ 剥离  │   后端网关层         │
+│   (终端交互)         │   ❌ 不需要 │   后端网关层         │
 ├─────────────────────┤           │   (HTTP API)        │
 │   命令解析层         │           ├─────────────────────┤
-│   (CLI参数)         │   ❌ 剥离  │   Harness抽象层      │
+│   (CLI参数)         │   ❌ 不需要 │   轻量调用层          │
 ├─────────────────────┤           │   (核心引擎)         │
 │   Agent Loop        │           │   • Agent控制器      │
 │   (状态机)          │   ✅ 保留  │   • MCP接口栈        │
@@ -155,15 +205,21 @@
 └─────────────────────┘           └─────────────────────┘
 ```
 
-#### Harness架构设计
+#### 轻量调用层架构设计
 
-> 💡 **白话理解**：Harness就像一个"万能遥控器"。你不需要知道电视、空调、音响各自怎么工作，只需要按遥控器上的按钮。Harness把复杂的AI推理过程封装起来，对外只暴露简单的接口：初始化、执行对话、流式输出、管理会话。
+> 💡 **白话理解**：这个调用层就像一个"万能遥控器"。你不需要知道电视、空调、音响各自怎么工作，只需要按遥控器上的按钮。它把复杂的 AI 推理过程封装起来，对外只暴露简单的接口：初始化、执行对话、流式输出、管理会话。
 
 ```typescript
-// Harness核心接口
-interface ClaudeCodeHarness {
+// 注意：以下代码是分析性伪代码，展示了如何封装 Claude API 的设计思路，
+// 并非 Claude Code SDK 源码。
+// Claude Code 官方 SDK（@anthropic-ai/claude-agent-sdk）提供的是
+// query()、ClaudeSDKClient、ClaudeAgentOptions 等接口，
+// 以下代码展示的是在此基础上构建后端服务时可能需要的封装层。
+
+// 示例：封装 Claude API 的轻量调用层（分析性代码）
+interface AgentCallLayer {
   // 初始化（轻量级）—— 就像开机，只建立基本连接
-  initialize(config: HarnessConfig): Promise<void>;
+  initialize(config: CallLayerConfig): Promise<void>;
   
   // 执行单次对话 —— 就像对遥控器说"换台"，它帮你完成整个操作
   execute(
@@ -188,8 +244,8 @@ interface ClaudeCodeHarness {
   destroySession(sessionId: string): Promise<void>;
 }
 
-// Harness配置
-interface HarnessConfig {
+// 调用层配置
+interface CallLayerConfig {
   // LLM配置 —— 连哪个AI模型，用什么密钥
   llm: {
     provider: 'anthropic' | 'openai';
@@ -219,20 +275,24 @@ interface HarnessConfig {
 
 #### 核心实现代码
 
-> 💡 **白话理解**：下面这段代码是轻量化SDK的"心脏"。它做了几件关键的事：启动时只建立基本连接（不加载所有工具），执行时才按需加载需要的工具，用完就释放。这就像你不会一次性打开手机上所有App，而是需要哪个开哪个。
+> 💡 **白话理解**：下面这段代码是轻量调用层的"心脏"。它做了几件关键的事：启动时只建立基本连接（不加载所有工具），执行时才按需加载需要的工具，用完就释放。这就像你不会一次性打开手机上所有App，而是需要哪个开哪个。
 
 ```typescript
-class LightweightHarness implements ClaudeCodeHarness {
-  private config: HarnessConfig;
+// 注意：以下代码是分析性伪代码，展示了如何封装 Claude API 的设计思路，
+// 并非 Claude Code SDK 源码。
+
+// 示例：封装 Claude API 的轻量调用层（分析性代码）
+class LightweightAgentCallLayer implements AgentCallLayer {
+  private config: CallLayerConfig;
   private llmClient: LLMClient;
   private toolRegistry: ToolRegistry;
   private sessionManager: SessionManager;
   private reactLoop: ReActLoop;
   private initialized = false;
   
-  // 启动时间：~200ms（相比官方的5-10秒）
+  // 启动时间：~200ms（相比 CLI 的5-10秒）
   // 为什么这么快？因为我们只建立连接，不加载工具
-  async initialize(config: HarnessConfig): Promise<void> {
+  async initialize(config: CallLayerConfig): Promise<void> {
     this.config = config;
     
     // 1. 初始化LLM客户端（仅建立连接，不发送请求）
@@ -263,7 +323,7 @@ class LightweightHarness implements ClaudeCodeHarness {
     });
     
     this.initialized = true;
-    console.log('Harness initialized in', Date.now() - startTime, 'ms');
+    console.log('CallLayer initialized in', Date.now() - startTime, 'ms');
   }
   
   // 执行一次对话：加载会话 → 预测需要哪些工具 → 执行推理 → 保存状态
@@ -273,7 +333,7 @@ class LightweightHarness implements ClaudeCodeHarness {
     context?: ExecutionContext
   ): Promise<ExecutionResult> {
     if (!this.initialized) {
-      throw new Error('Harness not initialized');
+      throw new Error('CallLayer not initialized');
     }
     
     // 1. 加载会话（从Redis或内存中恢复之前的对话状态）
@@ -326,13 +386,13 @@ class LightweightHarness implements ClaudeCodeHarness {
 }
 ```
 
-### 重构收益
+### 构建轻量调用层的收益
 
-| 指标 | 重构前 | 重构后 | 提升 |
+| 指标 | 直接使用CLI | 构建轻量调用层 | 提升 |
 |------|--------|--------|------|
 | **冷启动时间** | 5-10秒 | <500ms | **90%+** |
 | **内存占用** | 500MB+ | 50MB | **90%** |
-| **代码体积** | 完整CLI | 核心SDK | **70%** |
+| **代码体积** | 完整CLI | 核心调用层 | **70%** |
 | **可嵌入性** | ❌ CLI工具 | ✅ 库/服务 | - |
 | **水平扩展** | ❌ 单机 | ✅ 分布式 | - |
 
@@ -421,6 +481,8 @@ class LightweightHarness implements ClaudeCodeHarness {
 > 💡 **白话理解**：下面这段Go代码是多租户网关的核心实现。每个函数都有中文注释解释它的作用，帮助你理解"这段代码在干什么"以及"为什么要这样写"。
 
 ```go
+// 注意：以下代码是分析性伪代码，展示了多租户网关的设计思路，
+// 并非 Claude Code SDK 源码，也非任何官方组件的实现。
 package main
 
 import (
@@ -459,12 +521,12 @@ type Message struct {
 // 负责管理所有租户的会话、权限、上下文压缩等
 type MultiTenantGateway struct {
 	redis      *redis.Client          // Redis：用来存储会话数据（快速读写）
-	harness    *ClaudeCodeHarness     // Harness：AI推理引擎
+	agentLayer *AgentCallLayer       // 轻量调用层：封装 Claude API 的推理引擎
 	compressor *ContextCompressor     // 上下文压缩器：对话太长时自动压缩
 }
 
 // NewGateway —— 创建网关实例
-// 就像开一家新商场，需要准备好储物柜（Redis）、导购员（Harness）、压缩机器（Compressor）
+// 就像开一家新商场，需要准备好储物柜（Redis）、导购员（调用层）、压缩机器（Compressor）
 func NewGateway(redisURL string) (*MultiTenantGateway, error) {
 	// 初始化Redis连接 —— 连接数据存储
 	opt, err := redis.ParseURL(redisURL)
@@ -473,8 +535,8 @@ func NewGateway(redisURL string) (*MultiTenantGateway, error) {
 	}
 	rdb := redis.NewClient(opt)
 
-	// 初始化Harness —— 准备AI推理引擎
-	harness, err := NewHarness(HarnessConfig{
+	// 初始化轻量调用层 —— 准备AI推理引擎
+	agentLayer, err := NewAgentCallLayer(CallLayerConfig{
 		// ... 配置
 	})
 	if err != nil {
@@ -490,7 +552,7 @@ func NewGateway(redisURL string) (*MultiTenantGateway, error) {
 
 	return &MultiTenantGateway{
 		redis:      rdb,
-		harness:    harness,
+		agentLayer: agentLayer,
 		compressor: compressor,
 	}, nil
 }
@@ -615,8 +677,8 @@ func (g *MultiTenantGateway) Execute(
 	}
 	session.Messages = append(session.Messages, userMsg)
 
-	// 4. 调用Harness执行 —— 让AI开始思考并回复
-	result, err := g.harness.Execute(session, message)
+	// 4. 调用轻量调用层执行 —— 让AI开始思考并回复
+	result, err := g.agentLayer.Execute(session, message)
 	if err != nil {
 		return nil, err
 	}
@@ -867,9 +929,9 @@ func (g *MultiTenantGateway) ExecuteWithFallback(
 
 ## 📊 性能对比与收益
 
-### 重构收益汇总
+### 构建轻量调用层的收益汇总
 
-| 维度 | 指标 | 优化前 | 优化后 | 提升 |
+| 维度 | 指标 | 直接使用CLI | 构建轻量调用层 | 提升 |
 |------|------|--------|--------|------|
 | **性能** | 启动延迟 | 5-10秒 | <500ms | **90%+** |
 | | 内存占用 | 500MB | 50MB | **90%** |
@@ -888,8 +950,9 @@ func (g *MultiTenantGateway) ExecuteWithFallback(
 完成本节学习后，你应该能够回答以下问题：
 
 - [ ] **概念理解**：用你自己的话解释"多租户"是什么，并举一个生活中的例子
-- [ ] **架构理解**：官方CLI有哪些问题？轻量化重构解决了哪些？
-- [ ] **Harness理解**：Harness抽象的核心思想是什么？为什么要把"推理执行"和"交互逻辑"分离？
+- [ ] **架构理解**：Claude Code CLI 作为终端工具有哪些局限？构建轻量调用层解决了哪些问题？
+- [ ] **调用层理解**：轻量调用层的核心思想是什么？为什么要把"推理执行"和"交互逻辑"分离？
+- [ ] **官方 vs 自建**：Claude Code 官方提供了什么（query()、ClaudeSDKClient 等）？后端服务场景需要自己构建什么？
 - [ ] **懒加载**：为什么工具懒加载比全量加载好？在什么场景下懒加载可能反而更慢？
 - [ ] **租户隔离**：代码中是如何保证不同租户的数据互不可见的？有哪几层保护？
 - [ ] **上下文压缩**：什么时候需要压缩上下文？压缩的策略是什么？

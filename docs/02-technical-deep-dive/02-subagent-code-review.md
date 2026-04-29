@@ -36,6 +36,8 @@
 
 ## 🎯 核心设计思想
 
+> 📋 **技术说明**：本节描述的"多专家并联 L1/L2/L3"架构是一种分析性设计讨论，展示了代码评审系统可以如何组织。Claude Code 官方的 Subagent 机制通过 `AgentDefinition` 和 `.claude/agents/` 文件定义，支持并发执行和隔离。本节的价值在于理解"为什么需要多专家协作"这一核心问题。
+
 ### 为什么需要Subagent？
 
 在AI代码评审场景中，单一Agent面临以下挑战：
@@ -1088,6 +1090,67 @@ ${conflictGroup.map((f, i) => `
 8. **如果新增一个"可维护性专家"Subagent，需要修改哪些组件？** 这体现了什么设计原则？
 
 ---
+
+## 📎 附录：Claude Code 官方 Subagent 机制
+
+上面讨论的 L1/L2/L3 多专家架构是一种分析性设计框架，用于理解多Agent协作的必要性。Claude Code 官方的 Subagent 机制实现方式如下：
+
+### AgentDefinition 格式
+
+```typescript
+// Claude Code 通过 AgentDefinition 定义子代理
+interface AgentDefinition {
+  description: string;  // 描述子代理的功能，用于任务匹配
+  prompt: string;       // 系统提示词，定义子代理的行为
+  tools: string[];      // 子代理可使用的工具列表
+  model?: string;       // 可选：指定使用的模型
+}
+```
+
+### 文件定义方式
+
+在 `.claude/agents/` 目录下创建 Markdown 文件即可定义子代理：
+
+```markdown
+---
+description: "对代码变更进行安全审计，检测SQL注入、XSS等安全漏洞"
+---
+
+你是一名资深安全工程师。请对代码变更进行安全审计，重点关注：
+1. SQL注入风险
+2. XSS漏洞
+3. 权限绕过
+4. 敏感信息泄露
+
+输出格式：按严重程度排序的问题列表。
+```
+
+### 调用方式
+
+Claude Code 通过内置的 `Agent` 工具来调用子代理。当主 Agent 需要执行特定任务时，会调用 `Agent` 工具并指定子代理的描述和任务提示词：
+
+```typescript
+// 概念示例：通过 Agent 工具调用子代理（分析性伪代码）
+// 实际调用通过 Claude Code 内置的 Agent 工具完成
+const result = await useTool("Agent", {
+  description: "对代码变更进行安全审计",
+  prompt: "请审查以下代码变更中的安全漏洞...",
+  // 可选参数：
+  // subagent_type: "security-reviewer",  // 指定子代理类型
+  // isolation: "worktree",               // 隔离模式
+});
+```
+
+### 关键特性
+
+| 特性 | 说明 |
+|------|------|
+| **并发执行** | 多个子代理可同时运行，提高效率 |
+| **隔离选项** | 支持 worktree 和 fork 隔离，避免子代理间干扰 |
+| **内置子代理** | Explore（探索代码库）、Plan（规划任务）、General-purpose（通用任务） |
+| **自定义扩展** | 通过 `.claude/agents/` 目录添加项目专用子代理 |
+
+> 💡 **理解桥梁**：本节的 L1/L2/L3 多专家架构与官方机制的关系，就像"设计模式"与"具体实现"的关系。L1/L2/L3 回答的是"为什么需要多个专才"，而 `AgentDefinition` 回答的是"如何定义和运行这些专才"。
 
 > **上一篇**：[项目架构与技术难点](./01-project-architecture.md)  
 > **下一篇**：[Claude Code SDK底层原理](./03-claude-sdk-internals.md)

@@ -265,6 +265,8 @@
 
 ## 🛠️ 第二部分：Skills系统设计
 
+> 📋 **技术说明**：Claude Code 官方通过 `.claude/commands/` 目录下的 Markdown 文件（YAML frontmatter）定义 Skills，通过 `description` 字段进行匹配。以下讨论的设计模式（SkillRegistry、触发词索引、置信度过滤）是基于实践的分析性设计，展示了 Skills 管理系统的常见设计考量。
+
 ### Skills是什么？生活中的类比
 
 > 💡 **白话理解**：Skills就像手机上的App。你不会一次性打开所有App，而是按需启动。需要导航时打开地图App，需要支付时打开支付宝App。同样，AI也不会一次性加载所有Skills，而是根据你的需求，智能地选择加载哪些Skills。
@@ -635,3 +637,64 @@ Skills数量管理金字塔：
 
 > **上一篇**：[Claude Code相关技术对比与深度问题](../04-comparative-analysis/01-claude-comparison.md)
 > **下一篇**：[案例学习：威胁情报 Agent 系统设计](../06-case-studies/01-sangfor-case-study.md)
+
+---
+
+## 📎 附录：Claude Code 官方 Skills 机制
+
+上面讨论的 SkillRegistry、触发词索引、置信度过滤等是一种分析性设计框架，用于理解 Skills 管理的核心问题。Claude Code 官方的 Skills 机制实现方式如下：
+
+### Skills 定义格式
+
+在 `.claude/commands/` 目录下创建 Markdown 文件即可定义 Skill：
+
+```markdown
+---
+name: review-code
+description: "对代码变更进行自动化审查，检测安全漏洞、性能问题和代码规范"
+---
+
+你是一名资深代码审查工程师。请对以下代码变更进行审查：
+
+1. 检查安全漏洞（SQL注入、XSS、硬编码密钥等）
+2. 检查性能问题（N+1查询、内存泄漏等）
+3. 检查代码规范（命名、文档、复杂度等）
+
+输出格式：按严重程度排序的问题列表，每个问题包含位置、描述和修复建议。
+```
+
+### 关键字段说明
+
+| 字段 | 作用 | 示例 |
+|------|------|------|
+| `name` | Skill 的唯一标识符 | `review-code` |
+| `description` | 描述 Skill 的功能，用于触发匹配 | `"对代码变更进行自动化审查"` |
+| 正文内容 | Skill 被激活后的系统提示词 | 完整的审查指令 |
+
+### 触发机制
+
+Claude Code 通过 `description` 字段进行语义匹配：当用户请求与某个 Skill 的描述相关时，该 Skill 被激活，其正文内容作为系统提示词注入到对话上下文中。
+
+### 隔离执行
+
+```yaml
+---
+name: deep-analysis
+description: "深度代码分析"
+context: fork  # 在隔离的子代理中执行
+---
+```
+
+`context: fork` 选项会让 Skill 在独立的子代理中运行，避免污染主对话上下文。
+
+### 与本节设计框架的关系
+
+| 本节概念 | 官方机制对应 |
+|----------|-------------|
+| SkillRegistry | `.claude/commands/` 目录 + YAML frontmatter |
+| 触发词索引 | `description` 字段的语义匹配 |
+| 置信度过滤 | 模型内部的匹配度判断 |
+| 分层加载 | `context: fork` 隔离执行 |
+| Skill 参数 | 用户在调用时提供的参数 |
+
+> 💡 **理解桥梁**：本节的 SkillRegistry、触发词索引等概念与官方机制的关系，就像"数据库索引原理"与"MySQL B+树索引"的关系。前者回答的是"为什么需要这些机制"，后者回答的是"具体如何实现"。

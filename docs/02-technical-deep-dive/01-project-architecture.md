@@ -1,5 +1,7 @@
 # 项目架构与技术难点详解
 
+> 📋 **阅读提示**：本文档是基于公开技术资料、官方文档和工程实践的分析性学习材料。文中代码示例为分析性伪代码，用于阐述设计思路，并非任何产品的源码。涉及 Claude Code 的具体实现细节以 [官方文档](https://code.claude.com/docs) 为准。
+
 > 深度解析AI代码修复与Agent Loop的核心技术  
 > 主题：AI代码修复建议 + Agent Loop实现  
 > 难度：⭐⭐⭐⭐⭐
@@ -152,6 +154,8 @@
 ```
 
 ### 第一层：精准定位（Precise Location）
+
+> ⚠️ 以下代码展示了代码修复系统的设计思路，使用 Python 伪代码阐述核心逻辑，并非实际产品代码。
 
 #### 核心挑战
 - 日志信息往往只有错误堆栈，缺少上下文
@@ -781,9 +785,11 @@ Agent在超长上下文中容易"迷失"，偏离原始任务目标。例如：
 
 **解决方案**：
 
+> ⚠️ 以下代码为分析性伪代码，混合使用了 TypeScript 类语法和 Python 风格注释来阐述设计思路，并非可运行的源码。
+
 ```typescript
 class GoalKeeper {
-  """目标守护者 - 防止任务漂移"""
+  // 目标守护者 - 防止任务漂移
   
   private originalGoal: string;
   private checkpoints: Checkpoint[] = [];
@@ -802,9 +808,7 @@ class GoalKeeper {
     currentContext: AgentContext,
     llm: LLMClient
   ): Promise<DriftReport> {
-    """
-    检查当前执行是否偏离原始目标
-    """
+    // 检查当前执行是否偏离原始目标
     // 1. 计算目标对齐度
     const alignment = await this.computeAlignment(
       this.originalGoal,
@@ -846,10 +850,8 @@ class GoalKeeper {
     recentActions: Action[],
     llm: LLMClient
   ): Promise<number> {
-    """
-    计算最近行为与原始目标的对齐度
-    返回0-1之间的分数，1表示完全对齐
-    """
+    // 计算最近行为与原始目标的对齐度
+    // 返回0-1之间的分数，1表示完全对齐
     const actionSummary = recentActions
       .map(a => a.description)
       .join('\n');
