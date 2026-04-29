@@ -2,7 +2,7 @@
 
 > 📋 **阅读提示**：本文档库中的技术讨论基于公开资料分析，代码示例为分析性伪代码。涉及 Claude Code 的具体实现细节以 [官方文档](https://code.claude.com/docs) 为准。
 
-> 基于真实AI应用场景的深度技术文档，涵盖Agent架构、MCP协议、Claude Agent SDK（`@anthropic-ai/claude-agent-sdk`）、Subagent协作、多租户系统等核心知识点  
+> 基于真实AI应用场景的深度技术文档，涵盖Agent架构、MCP协议、Claude Agent SDK（`@anthropic-ai/claude-agent-sdk`）、Subagent协作等核心知识点  
 > **术语说明**：文中的"Claude Code SDK"泛指 Claude Code 生态的开发工具链，包括 Claude Code CLI 工具和 `@anthropic-ai/claude-agent-sdk` 程序化 SDK。具体语境下会区分两者。  
 > 从概念到实战，帮你真正理解AI Agent技术
 
@@ -14,7 +14,7 @@
 
 ### 这是什么？
 
-这是一份**AI Agent技术学习指南**。它来自真实的技术实践，把40多道核心技术问题拆解成了9篇深度文档。从最基础的概念到最硬核的架构设计，全部用中文讲清楚。
+这是一份**AI Agent技术学习指南**。它来自真实的技术实践，把40多道核心技术问题拆解成了8篇深度文档。从最基础的概念到最硬核的架构设计，全部用中文讲清楚。
 
 不管你是刚听说AI Agent想搞明白它到底是什么，还是已经写过一些代码想深入理解底层原理，这里都有适合你的内容。
 
@@ -31,7 +31,6 @@
 2. MCP协议如何让AI"长出手脚"去调用外部工具
 3. Claude Code SDK的底层设计，理解一个商业级AI产品是怎么搭的
 4. 多个AI如何像团队一样协作（Subagent机制）
-5. 企业级系统怎么做到让成千上万个用户同时用AI而不互相干扰（多租户架构）
 
 ### 怎么用这份文档？
 
@@ -57,7 +56,6 @@
 | **SDK** | Software Development Kit，软件开发工具包。封装好了复杂功能，开发者直接调用就行，不用从零开始造轮子 | 像买了个半成品家具包，螺丝和板材都配好了，你只需要按说明书组装 |
 | **上下文(Context)** | AI在当前对话中能"看到"的所有信息，包括之前的对话、系统指令、工具结果等。上下文越长，AI理解越准确，但消耗的Token也越多 | 像你跟朋友聊天时的"前情提要"，没有上下文AI就不知道你们在聊什么 |
 | **状态机** | 一种概念模型，把系统分成若干个状态，每个状态下有特定的行为和转换规则。在 Agent 系统中，状态机是**理解** Agent 循环的思维工具——实际的 SDK 实现通常通过 session_id 等方式管理状态，而非显式状态机类 | 像红绿灯：红灯→绿灯→黄灯→红灯，每个状态对应不同行为，转换有固定规则 |
-| **多租户** | 一套系统同时服务多个客户（租户），每个客户的数据和配置互相隔离。在AI系统中尤其重要，因为不同用户的对话和知识必须严格分开 | 像一栋公寓楼，每户有自己的房间和门锁，互不干扰，但共享同一栋楼的基础设施 |
 | **Skills** | AI可以调用的能力模块，每个Skill解决一类特定问题。Skills太多会让AI"选择困难"，太少又不够用，需要精心设计数量和分类 | 像瑞士军刀上的不同工具，开瓶器、剪刀、螺丝刀，需要哪个用哪个 |
 | **Token** | AI处理文本的最小单位，大约一个汉字=1-2个Token。Token数量决定AI能处理多长的文本，也直接影响使用成本 | 像自助餐的餐券，每张券换一口菜。Token越多，AI能"吃"的信息就越多 |
 | **思维链(CoT)** | Chain-of-Thought，让AI把推理过程一步步写出来，而不是直接给答案。这不仅能提高准确率，还让结果可解释、可检查 | 像数学考试写解题步骤，而不是只写答案。写步骤不仅让结果更准，还方便检查 |
@@ -110,15 +108,9 @@ Subagent是Agent的"下属"。主Agent负责整体规划和结果汇总，Subage
 
 一个关键的设计决策是：什么时候该用Subagent，什么时候该让主Agent自己干？简单说，如果一个任务需要不同的专业知识（比如代码评审需要安全专家、性能专家、风格专家），就适合用Subagent并行处理；如果任务简单直接，主Agent自己处理更高效。
 
-### Q7：多租户架构为什么在AI系统中特别重要？
+### Q7：学习路径可以压缩到更短吗？
 
-因为AI系统的资源消耗很大（Token要花钱、GPU要排队），而且不同用户的数据必须严格隔离（你不会想让别的用户看到你的对话记录）。多租户架构解决了两个核心问题：一是资源怎么公平分配，二是数据怎么安全隔离。
-
-在传统Web应用中，多租户主要是数据库层面的隔离。但在AI系统中，多租户还涉及上下文隔离（不同用户的对话历史不能混在一起）、知识隔离（不同租户可能有专属的知识库）、以及成本控制（每个租户用了多少Token要精确计量）。
-
-### Q8：学习路径可以压缩到更短吗？
-
-可以，但要看你的基础。如果你已经有AI开发经验，10天就能过完核心内容。如果你是零基础，建议老老实实按30天来，每天的内容都是精心安排的，跳着学容易留下知识盲区。
+可以，但要看你的基础。如果你已经有AI开发经验，10天就能过完核心内容。如果你是零基础，建议老老实实按29天来，每天的内容都是精心安排的，跳着学容易留下知识盲区。
 
 一个折中方案：如果你时间紧张，可以只做每周的"周复盘"日，把核心概念过一遍。但这样你会缺少动手实践的部分，理解可能不够深入。
 
@@ -135,7 +127,6 @@ Subagent是Agent的"下属"。主Agent负责整体规划和结果汇总，Subage
 | ⭐⭐⭐ | 🏗️ [项目架构与技术难点](./02-technical-deep-dive/01-project-architecture.md) | AI代码修复+Agent Loop实现 | 45min | Agent Loop、状态机、代码修复 |
 | ⭐⭐⭐ | 🤝 [Subagent协作与代码评审](./02-technical-deep-dive/02-subagent-code-review.md) | 多专家并联+置信度过滤 | 40min | Subagent、置信度、代码评审 |
 | ⭐⭐⭐⭐ | ⚙️ [Claude Code SDK底层原理](./02-technical-deep-dive/03-claude-sdk-internals.md) | MCP协议+状态机+Session管理 | 50min | MCP协议、SDK架构、Session |
-| ⭐⭐⭐⭐ | 🏢 [SDK轻量化与多租户架构](./03-architecture-design/01-multi-tenant-architecture.md) | API封装层设计+分布式部署 | 45min | 多租户、调用层、上下文压缩 |
 | ⭐⭐⭐ | ⚔️ [Claude Code技术对比](./04-comparative-analysis/01-claude-comparison.md) | 工具对比+思维链+记忆架构 | 35min | 技术选型、思维链、记忆 |
 | ⭐⭐⭐ | 🛠️ [AI Coding与Skills系统](./05-practical-experience/01-ai-coding-practices.md) | 人vs AI+Skills设计 | 30min | AI Coding、Skills、工具管理 |
 | ⭐⭐⭐ | 🛡️ [威胁情报Agent案例学习](./06-case-studies/01-sangfor-case-study.md) | 14个知识点详解+实操分析 | 25min | 威胁情报、实战应用 |
@@ -211,12 +202,6 @@ L2 进阶：理解系统设计
 ```
 L3 高级：架构设计与实战
 │
-├── 多租户架构
-│   ├── 会话隔离：不同用户的数据互不可见
-│   ├── 权限控制：谁能做什么，做到什么程度
-│   ├── 知识隔离：每个租户有自己的知识库
-│   └── 上下文压缩：多租户场景下的资源优化
-│
 ├── 高可用设计
 │   ├── 心跳检测：怎么知道服务还活着
 │   ├── 自动降级：出问题时怎么保证基本可用
@@ -233,7 +218,7 @@ L3 高级：架构设计与实战
     └── 论文处理流水线：多Agent协同处理学术论文
 ```
 
-**推荐阅读**：SDK底层原理 → 多租户架构 → 威胁情报Agent实战
+**推荐阅读**：SDK底层原理 → 威胁情报Agent实战
 
 ---
 
@@ -246,19 +231,16 @@ L3 高级：架构设计与实战
 | 1 | Agent Loop怎么实现？难点在哪？ | ⭐⭐⭐⭐⭐ | [项目架构](./02-technical-deep-dive/01-project-architecture.md) |
 | 2 | Claude Code SDK底层原理 | ⭐⭐⭐⭐⭐ | [SDK原理](./02-technical-deep-dive/03-claude-sdk-internals.md) |
 | 3 | Subagent设计有什么讲究？ | ⭐⭐⭐⭐⭐ | [Subagent设计](./02-technical-deep-dive/02-subagent-code-review.md) |
-| 4 | 多租户多轮对话后端实现 | ⭐⭐⭐⭐⭐ | [多租户架构](./03-architecture-design/01-multi-tenant-architecture.md) |
-| 5 | 为什么想替换官方SDK？ | ⭐⭐⭐⭐⭐ | [轻量化重构](./03-architecture-design/01-multi-tenant-architecture.md) |
-| 6 | AI如何给出代码级修复建议？ | ⭐⭐⭐⭐⭐ | [项目架构](./02-technical-deep-dive/01-project-architecture.md) |
-| 7 | Claude Code vs Cursor 本质区别 | ⭐⭐⭐⭐ | [技术对比](./04-comparative-analysis/01-claude-comparison.md) |
-| 8 | Skills过多导致模型困惑？ | ⭐⭐⭐⭐⭐ | [Skills系统](./05-practical-experience/01-ai-coding-practices.md) |
-| 9 | 上下文压缩策略 | ⭐⭐⭐⭐ | [多租户架构](./03-architecture-design/01-multi-tenant-architecture.md) |
-| 10 | 思维链修正机制 | ⭐⭐⭐⭐⭐ | [技术对比](./04-comparative-analysis/01-claude-comparison.md) |
+| 4 | AI如何给出代码级修复建议？ | ⭐⭐⭐⭐⭐ | [项目架构](./02-technical-deep-dive/01-project-architecture.md) |
+| 5 | Claude Code vs Cursor 本质区别 | ⭐⭐⭐⭐ | [技术对比](./04-comparative-analysis/01-claude-comparison.md) |
+| 6 | Skills过多导致模型困惑？ | ⭐⭐⭐⭐⭐ | [Skills系统](./05-practical-experience/01-ai-coding-practices.md) |
+| 7 | 思维链修正机制 | ⭐⭐⭐⭐⭐ | [技术对比](./04-comparative-analysis/01-claude-comparison.md) |
 
 ---
 
 ## 📅 学习路径建议
 
-每天1-2小时，30天从零到能独立搭建Agent系统。
+每天1-2小时，29天从零到能独立搭建Agent系统。
 
 ### 第一周：打基础（Day 1-7）
 
@@ -288,27 +270,26 @@ L3 高级：架构设计与实战
 
 | 天数 | 学习内容 | 具体任务 | 实践产出 |
 |------|----------|----------|----------|
-| Day 15 | 多租户 | 阅读[多租户架构](./03-architecture-design/01-multi-tenant-architecture.md)前半部分 | 画出多租户架构图 |
-| Day 16 | 会话隔离 | 深入理解会话隔离和权限控制 | 写出隔离方案的关键设计点 |
-| Day 17 | Harness 驾驭工程 | 理解 Harness = 模型之外的一切（约束+反馈+控制） | 用自己的话解释 Agent = Model + Harness |
-| Day 18 | 上下文压缩 | 学习语义摘要和上下文压缩策略 | 写出压缩前后的对比示例 |
-| Day 19 | Skills系统 | 阅读[AI Coding实践](./05-practical-experience/01-ai-coding-practices.md) | 列出Skills设计的核心原则 |
-| Day 20 | 实战案例 | 阅读[威胁情报 Agent 案例](./06-case-studies/01-sangfor-case-study.md) | 对比两个实战案例的异同 |
-| Day 21 | 周复盘 | 回顾本周内容，重点理解架构设计 | 完成一份L3知识脑图 |
+| Day 15 | 会话隔离 | 深入理解会话隔离和权限控制 | 写出隔离方案的关键设计点 |
+| Day 16 | Harness 驾驭工程 | 理解 Harness = 模型之外的一切（约束+反馈+控制） | 用自己的话解释 Agent = Model + Harness |
+| Day 17 | 上下文压缩 | 学习语义摘要和上下文压缩策略 | 写出压缩前后的对比示例 |
+| Day 18 | Skills系统 | 阅读[AI Coding实践](./05-practical-experience/01-ai-coding-practices.md) | 列出Skills设计的核心原则 |
+| Day 19 | 实战案例 | 阅读[威胁情报 Agent 案例](./06-case-studies/01-sangfor-case-study.md) | 对比两个实战案例的异同 |
+| Day 20 | 周复盘 | 回顾本周内容，重点理解架构设计 | 完成一份L3知识脑图 |
 
-### 第四周：动手实践（Day 22-30）
+### 第四周：动手实践（Day 21-29）
 
 | 天数 | 学习内容 | 具体任务 | 实践产出 |
 |------|----------|----------|----------|
-| Day 22 | 搭建最小Agent | 克隆minimal-agent项目，跑通第一个Agent | Agent能成功调用一个工具 |
-| Day 23 | 添加新工具 | 给Agent添加一个自定义工具（比如天气查询） | 新工具能正常工作 |
-| Day 24 | Subagent实践 | 实现一个简单的多Agent协作场景 | 两个Subagent能并行工作并汇总结果 |
-| Day 25 | 状态机实现 | 为Agent添加状态机，管理运行状态 | 状态转换逻辑正确 |
-| Day 26 | Session管理 | 实现对话历史的持久化和恢复 | 重启后能恢复之前的对话 |
-| Day 27 | 上下文压缩 | 实现简单的上下文摘要功能 | 长对话能自动压缩而不丢失关键信息 |
-| Day 28 | 论文阅读 | 阅读「必读论文」中的ReAct和CoT论文 | 写出论文核心观点摘要 |
-| Day 29 | 全面复盘 | 回顾30天所有笔记和脑图 | 整理出一份个人知识体系图 |
-| Day 30 | 项目收尾 | 完善实践项目，写一份技术总结 | 🎉 完成学习路径！ |
+| Day 21 | 搭建最小Agent | 克隆minimal-agent项目，跑通第一个Agent | Agent能成功调用一个工具 |
+| Day 22 | 添加新工具 | 给Agent添加一个自定义工具（比如天气查询） | 新工具能正常工作 |
+| Day 23 | Subagent实践 | 实现一个简单的多Agent协作场景 | 两个Subagent能并行工作并汇总结果 |
+| Day 24 | 状态机实现 | 为Agent添加状态机，管理运行状态 | 状态转换逻辑正确 |
+| Day 25 | Session管理 | 实现对话历史的持久化和恢复 | 重启后能恢复之前的对话 |
+| Day 26 | 上下文压缩 | 实现简单的上下文摘要功能 | 长对话能自动压缩而不丢失关键信息 |
+| Day 27 | 论文阅读 | 阅读「必读论文」中的ReAct和CoT论文 | 写出论文核心观点摘要 |
+| Day 28 | 全面复盘 | 回顾所有笔记和脑图 | 整理出一份个人知识体系图 |
+| Day 29 | 项目收尾 | 完善实践项目，写一份技术总结 | 🎉 完成学习路径！ |
 
 ---
 
@@ -320,7 +301,7 @@ L3 高级：架构设计与实战
 - [ ] **Harness 驾驭工程**：理解 Agent = Model + Harness，Guides（约束）+ Sensors（反馈）+ Steering Loop（持续改进）
 - [ ] **MCP协议**：工具定义、发现机制、调用流程
 - [ ] **Claude Code**：SDK架构、Session管理、上下文控制
-- [ ] **系统设计**：多租户隔离、权限控制、高可用设计
+- [ ] **系统设计**：权限控制、高可用设计
 - [ ] **工程实践**：代码评审、Subagent协作、Skills管理
 
 ### 进阶技能（优先掌握）
@@ -371,26 +352,7 @@ L3 高级：架构设计与实战
 
 **收获**：理解为什么用Subagent而不是一个Agent全干，置信度过滤的具体实现方式
 
-#### 项目二：多租户AI网关（中级 ⭐⭐⭐）
-
-**目标**：构建支持多租户的Claude Code后端服务  
-**技术栈**：Go + Redis + PostgreSQL + Kubernetes  
-**预计耗时**：2-3周  
-**学习点**：
-- 会话隔离
-- 上下文压缩
-- 水平扩展
-
-**实现步骤**：
-1. 设计多租户数据模型，每个租户有独立的配置和知识库
-2. 实现Session管理，确保不同租户的对话互不干扰
-3. 加入上下文压缩，当对话过长时自动摘要
-4. 用Redis做缓存，PostgreSQL做持久化
-5. 部署到Kubernetes，支持水平扩展
-
-**收获**：能画出完整的架构图，讲清楚会话隔离的具体方案，上下文压缩的触发条件和策略
-
-#### 项目三：AI论文助手（高级 ⭐⭐⭐⭐）
+#### 项目二：AI论文助手（高级 ⭐⭐⭐⭐）
 
 **目标**：多Agent协同完成论文检索、摘要、分析  
 **技术栈**：Python + LangChain + Vector DB + Arxiv API  
@@ -521,7 +483,7 @@ minimal-agent默认使用Claude。试着把LLM后端换成其他模型（比如G
 ---
 
 **最后更新**：2026年4月  
-**文档数量**：9篇核心文档  
+**文档数量**：8篇核心文档  
 **覆盖知识点**：40+核心技术点  
 **总字数**：5万+技术干货
 

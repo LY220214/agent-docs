@@ -2,7 +2,7 @@
 
 > 📋 **阅读提示**：本文档是基于公开技术资料、官方文档和工程实践的分析性学习材料。文中代码示例为分析性伪代码，用于阐述设计思路，并非任何产品的源码。涉及 Claude Code 的具体实现细节以 [官方文档](https://code.claude.com/docs) 为准。
 
-> 技术栈：Claude Code SDK、Agent架构、MCP协议、多租户系统
+> 技术栈：Claude Code SDK、Agent架构、MCP协议
 
 ---
 
@@ -19,7 +19,6 @@
 | **Subagent** | 知道它是主Agent派出去干活的"下属" | [术语速查表 - Subagent](../README.md#术语速查表) |
 | **上下文(Context)** | 理解AI能"看到"的信息是有限的 | [术语速查表 - 上下文](../README.md#术语速查表) |
 | **状态机** | 知道系统可以分成若干状态，每个状态有特定行为 | [术语速查表 - 状态机](../README.md#术语速查表) |
-| **多租户** | 理解一套系统服务多个客户、数据互相隔离 | [术语速查表 - 多租户](../README.md#术语速查表) |
 | **SDK** | 知道它是封装好复杂功能的开发工具包 | [术语速查表 - SDK](../README.md#术语速查表) |
 
 > 💡 **小贴士**：如果你是零基础，建议先花20分钟把 [术语速查表](../README.md#术语速查表) 从头到尾看一遍，每个术语都有通俗的类比，看完再回来，这份文档会好懂很多。
@@ -36,8 +35,7 @@
 | 4 | Agent Loop怎么实现？难点在哪？ | ⭐⭐⭐⭐⭐ | Agent核心架构 | "你真的理解Agent是怎么一圈一圈转起来的吗？转的时候出了问题怎么处理？" |
 | 5 | 代码评审Subagent设计有什么讲究？ | ⭐⭐⭐⭐⭐ | Subagent协作 | "多个AI一起干活，怎么分工、怎么汇总、怎么保证结果靠谱？" |
 | 6 | Claude Code SDK底层原理 | ⭐⭐⭐⭐⭐ | 源码理解 | "你是只会用工具，还是能看懂工具的内部构造？能挖多深？" |
-| 7 | Claude SDK多租户多轮对话后端实现 | ⭐⭐⭐⭐⭐ | 分布式系统 | "一个人用没问题，一千个人同时用呢？不同用户的数据怎么保证不串？" |
-| 8 | 实现Claude Code多轮对话 | ⭐⭐⭐⭐⭐ | 代码能力 | "别光说理论，写段代码看看。能不能把说的东西变成能跑的代码？" |
+| 7 | 实现Claude Code多轮对话 | ⭐⭐⭐⭐⭐ | 代码能力 | "别光说理论，写段代码看看。能不能把说的东西变成能跑的代码？" |
 
 > 🎯 **读懂"新手视角"列**：每个知识点表面上是一个技术问题，但背后都有更深的意图。理解了这个意图，你的学习才能切中要害，而不是浮于表面。
 
@@ -278,7 +276,7 @@ class AgentLoop {
 | **任务漂移** | Agent在超长上下文中容易"迷失" | 引入明确的状态检查点，定期校验任务目标 |
 | **死循环** | 某些情况下Agent可能陷入无限循环 | 设置最大迭代次数，引入人为干预机制 |
 | **工具选择** | 面对多个可用工具时选择困难 | 工具描述优化 + 使用历史学习 |
-| **上下文管理** | 长对话导致上下文爆炸 | 滑动窗口 + 语义摘要（见多租户架构章节） |
+| **上下文管理** | 长对话导致上下文爆炸 | 滑动窗口 + 语义摘要 |
 
 ---
 
@@ -286,8 +284,7 @@ class AgentLoop {
 
 - **Subagent协作与代码评审设计**：[Subagent协作](../02-technical-deep-dive/02-subagent-code-review.md)
 - **Claude Code SDK底层原理**：[SDK底层原理](../02-technical-deep-dive/03-claude-sdk-internals.md)
-- **多租户与大规模会话架构**：[多租户架构](../03-architecture-design/01-multi-tenant-architecture.md)
-- **多轮对话实现**：核心逻辑已在SDK底层原理和多租户架构中覆盖，重点掌握 Session 管理 + ReAct 循环的编码能力
+- **多轮对话实现**：核心逻辑已在SDK底层原理中覆盖，重点掌握 Session 管理 + ReAct 循环的编码能力
 
 ---
 
@@ -298,7 +295,6 @@ class AgentLoop {
 | 知识体系总览 | [../00-问题归类总结.md](../00-问题归类总结.md) | 所有知识点分类 |
 | Subagent设计 | [../02-technical-deep-dive/02-subagent-code-review.md](../02-technical-deep-dive/02-subagent-code-review.md) | Subagent协作详解 |
 | SDK底层原理 | [../02-technical-deep-dive/03-claude-sdk-internals.md](../02-technical-deep-dive/03-claude-sdk-internals.md) | SDK内部机制详解 |
-| 多租户架构 | [../03-architecture-design/01-multi-tenant-architecture.md](../03-architecture-design/01-multi-tenant-architecture.md) | 多租户与上下文压缩 |
 
 ---
 

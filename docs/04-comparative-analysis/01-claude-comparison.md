@@ -143,7 +143,6 @@
 ├─ 企业级部署，需要安全管控？
 │  └─ ✅ Claude Code
 │     · 沙箱隔离、细粒度权限
-│     · 支持多租户、审计日志
 │     · 可私有化部署
 │
 └─ 团队协作，需要统一AI工具？
@@ -586,5 +585,5 @@ Cursor的安全风险讨论：
 - [ ] **权限管理**：Claude Code的权限配置有哪些维度？如果你要给一个实习生配置权限，你会怎么设置？
 - [ ] **实际应用**：如果你要在公司引入AI编程工具，你会如何评估和选择？
 
-> **上一篇**：[SDK轻量化重构与多租户架构](../03-architecture-design/01-multi-tenant-architecture.md)  
+> **上一篇**：[Claude Code SDK 技术分析](../02-technical-deep-dive/03-claude-sdk-internals.md)
 > **下一篇**：[AI Coding实践与Skills系统设计](../05-practical-experience/01-ai-coding-practices.md)
