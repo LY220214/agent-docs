@@ -23,7 +23,9 @@
 
 > ⚠️ **重要说明**
 >
-> 以下内容讨论的是一种架构设计思路，当你想基于 Claude API 构建自己的 Agent 后端服务时可以参考的模式。**这不是 Claude Code 官方的架构，也不是 Claude Code SDK 的内部实现。** Claude Code 是一个终端 CLI 工具，它有自己的 Agent SDK（`@anthropic-ai/claude-agent-sdk`），提供 `query()`、`ClaudeSDKClient`、`ClaudeAgentOptions` 等接口。本文讨论的"Harness"轻量调用层是多租户后端场景下的一种设计模式，而非官方组件。
+> 以下内容讨论的是一种架构设计思路，当你想基于 Claude API 构建自己的 Agent 后端服务时可以参考的模式。**这不是 Claude Code 官方的架构，也不是 Claude Code SDK 的内部实现。** Claude Code 是一个终端 CLI 工具，它有自己的 Agent SDK（`@anthropic-ai/claude-agent-sdk`），提供 `query()`、`ClaudeSDKClient`、`ClaudeAgentOptions` 等接口。
+>
+> **术语说明**：本文讨论的"轻量调用层"（之前版本中曾用"Harness"代指）是一种 API 封装模式（Adapter Pattern），与 AI 领域的 [Harness Engineering（驾驭工程）](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html)（指围绕 Agent 构建约束、反馈和控制系统的工程实践）是两个不同概念。本文档的 README 术语表中对 Harness 工程有完整定义。
 >
 > 简单来说：Claude Code 官方给你的是一把锤子（CLI 工具），本文讨论的是如果你需要一间木工坊（后端服务），该怎么自己搭。
 
@@ -387,6 +389,8 @@ class LightweightAgentCallLayer implements AgentCallLayer {
 ```
 
 ### 构建轻量调用层的收益
+
+> ⚠️ 以下数据为分析性估算，用于说明架构优化的**方向**和**量级**，并非实测数据。实际收益取决于具体实现、硬件环境和 API 响应时间。
 
 | 指标 | 直接使用CLI | 构建轻量调用层 | 提升 |
 |------|--------|--------|------|
@@ -930,6 +934,8 @@ func (g *MultiTenantGateway) ExecuteWithFallback(
 ## 📊 性能对比与收益
 
 ### 构建轻量调用层的收益汇总
+
+> ⚠️ 以下数据为分析性估算。实际收益因实现而异。
 
 | 维度 | 指标 | 直接使用CLI | 构建轻量调用层 | 提升 |
 |------|------|--------|--------|------|
